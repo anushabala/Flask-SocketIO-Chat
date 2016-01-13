@@ -18,7 +18,6 @@ def index():
         session['name'] = form.name.data
         add_new_user()
         wait = route_to_task()
-        print "form",session['name']
         if not wait:
             return redirect(url_for('.chat'))
         else:
@@ -33,7 +32,6 @@ def chat():
     """Chat room. The user's name and room must be stored in
     the session."""
     name = session.get('name', '')
-    print "chat:", name
     room = session.get('room', '')
     if name == '' or room == '':
         return redirect(url_for('.index'))
@@ -48,11 +46,11 @@ def waiting():
         ctr += 1
         wait = route_to_task()
         if not wait:
-            print session.get('name'),"waited for",ctr
-            time.sleep(5)
+            ctr = 0
             return redirect(url_for('.chat'))
         else:
             return redirect(url_for('.waiting'))
+    ctr = 0
     return render_template('single_task.html')
 
 
@@ -82,10 +80,8 @@ def route_to_task():
     if unpaired_users:
         paired_user = random.sample(unpaired_users, 1)[0]
         room = assign_room(current_user, paired_user)
-        print "Current:", current_user
-        print "Paired:", paired_user
-        cursor.execute('''UPDATE ActiveUsers SET room=? WHERE name=?''', (room[0], paired_user[0]))
-        cursor.execute('''UPDATE ActiveUsers SET room=? WHERE name=?''', (room[0], current_user[0]))
+        cursor.execute('''UPDATE ActiveUsers SET room=? WHERE name=?''', (room, paired_user[0]))
+        cursor.execute('''UPDATE ActiveUsers SET room=? WHERE name=?''', (room, current_user[0]))
         conn.commit()
         conn.close()
         session['room'] = room
@@ -116,4 +112,4 @@ def assign_room(participant1, participant2):
     conn.commit()
     conn.close()
 
-    return room
+    return room[0]
